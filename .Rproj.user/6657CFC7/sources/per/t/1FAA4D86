@@ -1,0 +1,28 @@
+{
+    "id": "1FAA4D86",
+    "path": "~/GitHub/crim-data-south/exemplar-activity-1.Rmd",
+    "project_path": "exemplar-activity-1.Rmd",
+    "type": "r_markdown",
+    "hash": "1105751156",
+    "contents": "",
+    "dirty": false,
+    "created": 1699972516994.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "tempName": "Untitled1",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "96,22",
+        "scrollLine": "84",
+        "last_setup_crc32": ""
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1699975427,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1699975427467,
+    "read_only": false,
+    "read_only_alternatives": []
+}
