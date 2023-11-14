@@ -1,5 +1,5 @@
 ---
-title: "Case Study 1: Descriptive and Time Series Analysis of Homicide in Ease Asia"
+title: "Case Study 1: Descriptive and Time Series Analysis of Homicide in East Asia"
 author: "David Buil-Gil and Laura Bui"
 date: "2023-11-14"
 output: word_document
@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Add some context in text. 
 
-Data from The World Bank Bank repository (https://data.worldbank.org/indicator/VC.IHR.PSRC.P5?most_recent_year_desc=true&locations=).
+Data from The World Bank Data repository (https://data.worldbank.org/indicator/VC.IHR.PSRC.P5?most_recent_year_desc=true&locations=).
 
 We want to compare rates of homicide between East Asia and the rest of the world, and visualise patterns over time.
 
@@ -25,7 +25,7 @@ library(stringr)
 library(ggplot2)
 ```
 
-We open the dataset of interest, and select east Asian countries (China, Hong Kong, Macau, Japan, Mongolia, North Korea, South Korea, Taiwan):
+We open the dataset of interest, and select East Asian countries (China, Hong Kong, Macau, Japan, Mongolia, North Korea, South Korea, Taiwan):
 
 ```{r open data}
 #Read csv file with data
