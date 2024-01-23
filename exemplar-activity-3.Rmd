@@ -22,6 +22,8 @@ We begin by loading the required packages in R:
 library(here)
 library(dplyr)
 library(ggplot2)
+library(sf)
+library(viridis)
 ```
 
 We open this dataset and select only those rows that refer to our crime type of interest: kidnappings (or 'secuestro' in Spanish). We are particularly interested in exploring the geographic distribution of crimes in 2017; the last year when data was made available.
@@ -56,11 +58,11 @@ data_Mexico_states <- data_Mexico %>%
 
 ```
 
-We have now created a new database called 'data_Mexico_states' which includes the count of kidnappings for each state in 2017. We can execute 'top_n(data_Mexico_states, 3, freq)' and observe that the State of Mexico concentrates the largest number of kidnappings, 173, followed by Veracruz, with 172. On the other end, Yucatan recorded 0 kidnappings in 2017. On average, 35.9 kidnappings were recorded across the 32 states of Mexico ('mean(data_Mexico_states$freq').
+We have now created a new database called 'data_Mexico_states' which includes the count of kidnappings for each state in 2017. We can execute 'top_n(data_Mexico_states, 3, freq)' and observe that the State of Mexico concentrates the largest number of kidnappings, 173, followed by Veracruz, with 172. On the other end, Yucatan recorded 0 kidnappings in 2017. On average, 35.9 kidnappings were recorded across the 32 states of Mexico ('mean(data_Mexico_states$freq)').
 
-This however may mark ... need for rates. We calculate rates of kidnappings per 100,000 residents.
+This however may mask .BLABLABLA.. need for calculating rates.. BLABLA. We calculate rates of kidnappings per 100,000 residents.
 
-Population: https://www.inegi.org.mx/app/tabulados/default.html?nc=mdemo02 
+We can download data about the population size for each state from the website of the National Institute of Statistics and Geography (INEGI): https://www.inegi.org.mx/app/tabulados/default.html?nc=mdemo02 
 
 ```{r population rate}
 
@@ -78,11 +80,9 @@ According to calculated crime rates, the states with the highest rates of kidnap
 
 Finally, we want to display crime rates in maps.
 
-Source: https://github.com/strotgen/mexico-leaflet/
+Source of shapefile: https://github.com/strotgen/mexico-leaflet/
 
 ```{r load map, message = FALSE, warning = FALSE}
-
-library(sf)
 
 #Read geojson of Mexico states
 #states_geojson <- st_read("https://github.com/strotgen/mexico-leaflet/blob/master/states.geojson")
@@ -108,8 +108,6 @@ states_geojson <- states_geojson %>%
 
 
 ```{r visualise map no show, include = FALSE}
-
-library(viridis) 
 
 ggplot(data = states_geojson) +
   ggtitle("Rate of kidnappings per 100,000 residents in Mexico states") +
@@ -140,7 +138,7 @@ knitr::include_graphics(here("exemplar-activities/Mexico_map.png"))
 
 ```
 
-XXXX
+XXXX interpret
 
 
 **References**
