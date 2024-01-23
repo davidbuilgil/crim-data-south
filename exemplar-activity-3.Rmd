@@ -1,0 +1,152 @@
+---
+title: 'Case Study 3: Geographic distribution of crime in Mexico'
+author: "David Buil-Gil and Reka Solymosi"
+date: "2024-01-25"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+CONTEXT
+
+We analyse police-recorded crime data made available in the webside of the Mexican Government (https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva?state=published).
+
+We begin by loading the required packages in R:
+
+
+```{r packages, message = FALSE, warning = FALSE}
+library(here)
+library(dplyr)
+library(ggplot2)
+```
+
+We open this dataset and select only those rows that refer to our crime type of interest: kidnappings (or 'secuestro' in Spanish). We are particularly interested in exploring the geographic distribution of crimes in 2017; the last year when data was made available.
+
+```{r open data}
+#Read csv file with crime data
+data_Mexico <- read.csv(here("data/IDM_nov2023.csv"))
+
+#Select crime type of interest in dataset, and only records for 2017
+data_Mexico <- data_Mexico %>%
+  filter(MODALIDAD == "PRIV. DE LA LIBERTAD (SECUESTRO)") %>%
+  filter(ANO == 2017)
+
+```
+
+Calculate number of crimes each year in each state ('ENTIDAD' in the database).
+
+```{r clean data}
+
+#Calculate number of crimes across months
+data_Mexico <- data_Mexico %>%
+  mutate(freq = rowSums(select(., 8:19), na.rm = TRUE))
+
+#Select variables of interest only
+data_Mexico <- data_Mexico %>%
+  select(ANO, ENTIDAD, TIPO, freq)
+
+#Calculate number of crimes in each state
+data_Mexico_states <- data_Mexico %>%
+  group_by(ENTIDAD) %>%
+  summarize(freq = sum(freq))
+
+```
+
+We have now created a new database called 'data_Mexico_states' which includes the count of kidnappings for each state in 2017. We can execute 'top_n(data_Mexico_states, 3, freq)' and observe that the State of Mexico concentrates the largest number of kidnappings, 173, followed by Veracruz, with 172. On the other end, Yucatan recorded 0 kidnappings in 2017. On average, 35.9 kidnappings were recorded across the 32 states of Mexico ('mean(data_Mexico_states$freq').
+
+This however may mark ... need for rates. We calculate rates of kidnappings per 100,000 residents.
+
+Population: https://www.inegi.org.mx/app/tabulados/default.html?nc=mdemo02 
+
+```{r population rate}
+
+#Read csv file with population data
+population <- read.csv(here("data/Population2010.csv"))
+
+#Merge with crime data and calculate crime rates
+data_Mexico_states <- data_Mexico_states %>%
+  left_join(population, by = c("ENTIDAD" = "STATE")) %>%
+  mutate(crime_rate = freq / Population2010 * 100000)
+
+```
+
+According to calculated crime rates, the states with the highest rates of kidnappings per capita are Zacatecas and Tamaulipas, both with over 4 kidnappings per 100,000 residents.
+
+Finally, we want to display crime rates in maps.
+
+Source: https://github.com/strotgen/mexico-leaflet/
+
+```{r load map, message = FALSE, warning = FALSE}
+
+library(sf)
+
+#Read geojson of Mexico states
+#states_geojson <- st_read("https://github.com/strotgen/mexico-leaflet/blob/master/states.geojson")
+states_geojson <- st_read(here("data/states.geojson"))
+
+#Merge crime rates with geojson file
+states_geojson <- states_geojson %>%
+  mutate(state_name = toupper(state_name), #capital letters for consistency
+         state_name = recode(state_name, #rename some states for consistency
+                             'DISTRITO FEDERAL' = 'CIUDAD DE MEXICO',
+                             'MÉXICO' = 'MEXICO',
+                             'MICHOACÁN DE OCAMPO' = 'MICHOACAN',
+                             'QUERÉTARO' = 'QUERETARO',
+                             'SAN LUIS POTOSÍ' = 'SAN LUIS POTOSI',
+                             'VERACRUZ DE IGNACIO DE LA LLAVE' = 'VERACRUZ',
+                             'NUEVO LEÓN' = 'NUEVO LEON',
+                             'COAHUILA DE ZARAGOZA' = 'COAHUILA',
+                             'YUCATÁN' = 'YUCATAN')) %>% 
+  left_join(data_Mexico_states, by = c("state_name" = "ENTIDAD"))
+
+
+```
+
+
+```{r visualise map no show, include = FALSE}
+
+library(viridis) 
+
+ggplot(data = states_geojson) +
+  ggtitle("Rate of kidnappings per 100,000 residents in Mexico states") +
+  geom_sf(aes(fill = crime_rate)) +
+  scale_fill_viridis(option = "magma")+
+  theme_void()
+
+ggsave(here("exemplar-activities/Mexico_map.png"), 
+       width = 10, height = 7)
+
+```
+
+
+```{r visualise map show, message = FALSE, fig.show = 'hide'}
+
+ggplot(data = states_geojson) +
+  ggtitle("Rate of kidnappings per 100,000 residents in Mexico states") +
+  geom_sf(aes(fill = crime_rate)) +
+  scale_fill_viridis(option = "magma")+
+  theme_void()
+
+```
+
+
+```{r visualise map display, echo = FALSE}
+
+knitr::include_graphics(here("exemplar-activities/Mexico_map.png"))
+
+```
+
+XXXX
+
+
+**References**
+
+
+https://link.springer.com/article/10.1007/s12117-012-9185-x
+https://doi.org/10.1080/17440572.2011.632499
+https://doi.org/10.1016/j.ijlcj.2021.100479 
+
