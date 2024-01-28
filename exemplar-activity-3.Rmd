@@ -13,72 +13,133 @@ knitr::opts_chunk$set(echo = TRUE)
 
 CONTEXT
 
-We analyse police-recorded crime data made available in the webside of the Mexican Government (https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva?state=published).
+We take police-recorded crime data made available on the webside of the Mexican Government [https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva?state=published](https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva?state=published) to visualise kidnapping across the different states (entidades) of Mexico. 
 
 We begin by loading the required packages in R:
 
-
 ```{r packages, message = FALSE, warning = FALSE}
-library(here)
-library(dplyr)
-library(ggplot2)
-library(sf)
-library(viridis)
+library(here) # to identify the path to the data
+library(readr) # to read in CSV data
+library(dplyr) # for data wrangling
+library(ggplot2) # for data visualisation
+library(sf) # for spatial data manipulation and visualisation
+library(viridis) # for colour schemes
 ```
 
-We open this dataset and select only those rows that refer to our crime type of interest: kidnappings (or 'secuestro' in Spanish). We are particularly interested in exploring the geographic distribution of crimes in 2017; the last year when data was made available.
+The data are saved in a CSV (comme separated values) which make it easy load into an object called `data_Mexico`. We use the `read_csv()` function from the `readr` package.
 
-```{r open data}
+```{r open data, message=FALSE}
 #Read csv file with crime data
-data_Mexico <- read.csv(here("data/IDM_nov2023.csv"))
-
-#Select crime type of interest in dataset, and only records for 2017
-data_Mexico <- data_Mexico %>%
-  filter(MODALIDAD == "PRIV. DE LA LIBERTAD (SECUESTRO)") %>%
-  filter(ANO == 2017)
+data_Mexico <- read_csv(here("data/IDM_nov2023.csv"))
 
 ```
 
-Calculate number of crimes each year in each state ('ENTIDAD' in the database).
+We can have a look at the data and see there are a few variables of interest: 
+
+- `TIPO` (crime type)
+- `ANO` (year)
+- `ENTIDAD` (state)
+
+To visualise kidnappings we filter on the `TIPO` (crime type) variable for `SECUESTRO` (kidnapping). We filter for incidents in the year 2017 on the `ANO` variable.
+
+```{r filter data}
+
+data_Mexico <- data_Mexico %>%
+  filter(TIPO == "SECUESTRO") %>% # select only kidnappings
+  filter(ANO == 2017) # filter for year 2017 only
+
+```
+
+To plot the number of kidnappings per state on a map, we need to create a table which contains two columns: the state name (we can keep this as `ENTIDAD`) and the number of kidnappings for each one. We can see that the number of kidnappings are broken down by month: there is a new column for each month of the year. To get a total score for the year for each state, we must sum the numbers across these columns (these are columns 8 through 19, inclusive). We can use the `rowSums()` function, and specify the columns we need in the `accross()` function. Remember to set the `na.rm` parameter to `TRUE` to make sure that NAs (missing data) are just counted as 0 (no kidnappings in that month). 
+
 
 ```{r clean data}
 
-#Calculate number of crimes across months
 data_Mexico <- data_Mexico %>%
-  mutate(freq = rowSums(select(., 8:19), na.rm = TRUE))
-
-#Select variables of interest only
-data_Mexico <- data_Mexico %>%
-  select(ANO, ENTIDAD, TIPO, freq)
-
-#Calculate number of crimes in each state
-data_Mexico_states <- data_Mexico %>%
-  group_by(ENTIDAD) %>%
-  summarize(freq = sum(freq))
+  mutate(sum_secuestro = rowSums(across(8:19), # create new variable of sums
+                                 na.rm = TRUE)) # treat NA as 0 here
 
 ```
 
-We have now created a new database called 'data_Mexico_states' which includes the count of kidnappings for each state in 2017. We can execute 'top_n(data_Mexico_states, 3, freq)' and observe that the State of Mexico concentrates the largest number of kidnappings, 173, followed by Veracruz, with 172. On the other end, Yucatan recorded 0 kidnappings in 2017. On average, 35.9 kidnappings were recorded across the 32 states of Mexico ('mean(data_Mexico_states$freq)').
+Now we can count the number of total kidnappings in each entidad in 2017 by using the `group_by()` and `summarise()` functions to create a frequency table where each row represents one state. 
+  
+  
+```{r calculate per state}
 
-This however may mask .BLABLABLA.. need for calculating rates.. BLABLA. We calculate rates of kidnappings per 100,000 residents.
+#Calculate number of crimes in each state
+data_Mexico_states <- data_Mexico %>%
+  group_by(ENTIDAD) %>% #group by state
+  summarise(secuestro = sum(sum_secuestro)) # sum all kidnappings in the state
 
-We can download data about the population size for each state from the website of the National Institute of Statistics and Geography (INEGI): https://www.inegi.org.mx/app/tabulados/default.html?nc=mdemo02 
+```
+
+We have now saved this frequency table in a new object called `data_Mexico_states` which includes the count of kidnappings for each state in 2017. 
+
+To explore the data before mapping we can look at the top 3 states with the most kidnappings: 
+
+
+```{r}
+
+top_n(data_Mexico_states, 3, secuestro)
+
+```
+
+Observe that the State of Mexico concentrates the largest number of kidnappings, 173, followed by Veracruz, with 172. 
+
+We can look at the mean, median, standart deviation as well:
+
+```{r}
+
+mean(data_Mexico_states$secuestro)
+median(data_Mexico_states$secuestro)
+sd(data_Mexico_states$secuestro)
+
+```
+
+On average, 36 kidnappings were recorded in each of the 32 states of Mexico, however we see this is not evenly distributed. A histogram can help look at the skew:
+
+```{r histogram, message=FALSE}
+
+ggplot(data_Mexico_states, aes(x = secuestro)) + 
+  geom_histogram() +
+  theme_minimal()
+
+
+```
+
+We can see the top three states () all the way on the right there, far away from the rest of the country. Are these states particularly risky for kidnappings? To answer this we need to consider the rate of kidnappings per population, as it is possible that these are just the more populous states. Where there are more people, there are more of everything, even kidnappings! 
+
+To account for this we can calculate rates of kidnappings per 100,000 residents. To do so we can download data about the population size for each state from the website of the National Institute of Statistics and Geography (INEGI): https://www.inegi.org.mx/app/tabulados/default.html?nc=mdemo02 
 
 ```{r population rate}
 
 #Read csv file with population data
-population <- read.csv(here("data/Population2010.csv"))
+population <- read_csv(here("data/Population2010.csv"))
+
+```
+
+To link with our crime data, we can link the two tables using their common column for state, which is still `ENTIDAD` in our crime data, and is `STATE` in INEGI's population statistics. We use the `left_join()` function: 
+
+```{r merge}
 
 #Merge with crime data and calculate crime rates
 data_Mexico_states <- data_Mexico_states %>%
   left_join(population, by = c("ENTIDAD" = "STATE")) %>%
-  mutate(crime_rate = freq / Population2010 * 100000)
+  mutate(secuestro_rate = secuestro / Population2010 * 100000)
 
 ```
 
-According to calculated crime rates, the states with the highest rates of kidnappings per capita are Zacatecas and Tamaulipas, both with over 4 kidnappings per 100,000 residents.
+Let's look again: 
 
-Finally, we want to display crime rates in maps.
+```{r}
+
+top_n(data_Mexico_states, 3, secuestro_rate)
+
+```
+
+We can see new states appear according to calculated crime rates. However, Tamaulipas is here again, indicating it is high count and high rate for kidnapping. This might be a state of interest to consider for problem solving interventions aimed to reduce kidnapping. 
+
+But how are these rates distributed in space? Are these ares near each other. It is important to realise that these places do not exist independently of one another, and spatial relationships can be best considered initially through a nice clear exploratory visualisation, such as a thematic map. 
 
 Source of shapefile: https://github.com/strotgen/mexico-leaflet/
 
@@ -111,7 +172,7 @@ states_geojson <- states_geojson %>%
 
 ggplot(data = states_geojson) +
   ggtitle("Rate of kidnappings per 100,000 residents in Mexico states") +
-  geom_sf(aes(fill = crime_rate)) +
+  geom_sf(aes(fill = secuestro_rate)) +
   scale_fill_viridis(option = "magma")+
   theme_void()
 
@@ -124,10 +185,11 @@ ggsave(here("exemplar-activities/Mexico_map.png"),
 ```{r visualise map show, message = FALSE, fig.show = 'hide'}
 
 ggplot(data = states_geojson) +
-  ggtitle("Rate of kidnappings per 100,000 residents in Mexico states") +
-  geom_sf(aes(fill = crime_rate)) +
-  scale_fill_viridis(option = "magma")+
-  theme_void()
+  ggtitle("Kidnappings in Mexico by states") +
+  geom_sf(aes(fill = secuestro_rate)) +
+  scale_fill_viridis(option = "magma", name= "Number of kidnappings per 100,000 population")+
+  theme_void() +
+   theme(legend.position="top")
 
 ```
 
