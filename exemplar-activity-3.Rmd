@@ -1,6 +1,6 @@
 ---
-title: 'Case Study 3: Geographic distribution of crime in Mexico'
-author: "David Buil-Gil and Reka Solymosi"
+title: 'Case Study 3: Mapping Kidnappings in Mexico'
+author: "David Buil-Gil, Reka Solymosi and Eon Kim"
 date: "2024-01-25"
 output:
   word_document: default
