@@ -1,0 +1,109 @@
+---
+title: 'Case Study 3: Mapping Kidnappings in Maxico'
+author: "Eon Kim"
+date: "2024-02-01"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this sptial analysis activity, we explore the spatial distribution of kidnapping crime in Mexico. Kidnapping, defined as the unlawful abduction or captivate of individuals against their will, carries profound security implications (Guerette and Headley, 2019). Within the context of Mexico, kidnapping is closely linked to organised crime, particularly drug cartels, and poses a challenge to national security (Ochoa, 2019). Recent reports (U.S. Department of State) suggest that kidnapping in Mexcico is largely associated to the demand for illicit substances in the United States, leading to substantial financial costs for Mexican criminal organisations. These groups also exploit individuals, including children, for various criminal purposes, including kidnappings.
+
+The concentration of kidnapping crime, particularly by criminal organisations, is influenced by  the strategic choice and operational structure by individual or group kidnappers (Yates and Leutert, 2018; Massa and Fondevilla, 2021). These calculations considers factors such as law enforcement policies and the presence of potential targets (Clarke and Cornish, 1985), and these elements contributes to distinct spatio-temporal patterns in criminal activities (Eck et al., 2007; Massa and Fondevilla, 2021). During the 2000s, kidnapping incidents were not randomly distributed across Mexcico but rather concentrated in specific geographic regions. This pattern aligns with the theoretical framework of opportunity theory, where criminal decision-making hinges on meticulous strategic assessments of available criminal opportunities.
+
+For this activity, we utilised the publicly available open data[^1] on crime released by the National Public Security System (SNSP) through the official portal. We sourced geographic shapefile [^2] data from the Humanitarian Data Exchange (HDX) platform[^3], which provided spatial information for our analysis. 
+
+```{r packages, message = FALSE, warning = FALSE}
+library(dplyr) # for data manipulation
+library(tidyr) # for data tidying
+library(sf) # for working with spatial data
+library(tmap) # for thematic mapping
+library(leaflet) # for interactive maps
+```
+
+
+```{r open data, message=FALSE}
+#import the crime data into R/Rstudio
+df_mexico <- read.csv("IDEFC_NM_dic23.csv", fileEncoding = "Latin1")
+#import the shapefile into R/Rstudio
+sf_mexico <- st_read("mex_admbnda_govmex_20210618_SHP/mex_admbnda_adm1_govmex_20210618.shp")
+```
+
+
+```{r data cleaning 1, message=FALSE}
+#subset the Secuestro (kidnapping) crime
+df_secuestro <- subset(df_mexico, Tipo.de.delito == "Secuestro")
+```
+
+After installing and loading the required data, we imported the datasets into R/Rstudio.The raw data contained 40 different crime types across 32 federal entities in Mexico from 2015 to 2023, we reshaped the dataset to make it suitable for our analysis. We began by subsetting the data, filtering rows corresponding to 'Secuestro (Kidnapping).' 
+
+```{r data cleaning 2, message=FALSE}
+#make a panel format
+df_secuestro <- df_secuestro %>%
+  group_by(Año, Entidad) %>%
+  summarise(kidnapping_cnt = sum(Enero + Febrero + Marzo + Abril + Mayo + Junio + Julio + Agosto + Septiembre + Octubre + Noviembre + Diciembre, na.rm = TRUE))
+
+#explore the data
+total_kidnapping_by_year <- df_secuestro %>% 
+  group_by(Año) %>% 
+  summarize(total_kidnapping = sum(kidnapping_cnt))
+```
+
+The data records kidnapping crimes monthly. Using the 'pipe(%>%)' and 'group_by()' functions in the dplyr package in R, we summed the number of incidents recorded for each of the 12 months (e.g., Enero, Febrero and so on up to Diciembre), generating a dataframe with summarised information about kidnapping counts for each year and region in Mexico. The total number of kidnapping incidents increased from 2015 onwards, reaching its peak in 2019 with 1,330 recorded incidents. However, in 2020, the number of kidnapping incidents significantly dropped to 833, and in 2023, the recorded incident was 456. 
+
+```{r data linkage, message=FALSE}
+#matching names (two unmathing records)
+sf_mexico$ADM1_ES <- 
+  ifelse(sf_mexico$ADM1_ES == "Querétaro de Arteaga" , "Querétaro" ,
+  ifelse(sf_mexico$ADM1_ES == "Distrito Federal", "Ciudad de México", sf_mexico$ADM1_ES))
+
+#merge kidnapping count with the mexico stat file
+df_merged <- left_join(df_secuestro, sf_mexico, by = c("Entidad" = "ADM1_ES"))
+
+#transform into spatial dataframe
+df_merged <- left_join(df_secuestro, sf_mexico, by = c("Entidad" = "ADM1_ES"))
+```
+
+we integrated the crime data with a shapefile, combining geometric location and attribute information for spatial analysis. This integration relied on shared identifiers in both datasets, such as unique identification numbers, states, and city names. We utilised the 'Entidad' variable from the crime data and the 'ADM1_ES' variable from the shapefile for this purpose. A critical step in this integration was verifying data consistency and ensures that the values in both the 'Entidad' column of the crime data and the 'ADM1_ES' variable in the shapefile align accurately. This validation process is particularly crucial, as discrepancies during data linkage can potentially lead to data mismatches.
+
+To address this, we transformed 'Querétaro de Arteaga' in the shapefile into 'Querétaro,' and 'Distrito Federal' into 'Ciudad de México', aligning with the official state name change. The two datasets were then joined using the 'left_join()' function in the 'dplyr' package. To perform spatial analysis, we then converted the dataframe into a spatial dataframe. 
+
+```{r generate maps 1, message=FALSE}
+map2019 <- tm_shape(sf_merged %>% filter(Año == 2019)) +
+  tm_fill(col = "kidnapping_cnt", title = "Kidnapping", palette = "Purples", breaks = seq(0, 300, 50)) +
+  tm_layout(title = "Kidnapping Crimes in Mexico, 2019")
+map2019
+```
+
+We created a thematic map using the tmap package. In this demonstration, we selected 2019 year which recorded the highest value in the past five years. The legend of the map is labelled, "Kidnapping," and the colour palette "Purples" is used to represent different ranges of kidnapping counts, with intervals set at 50. States with the highest number of kidnappings in Mexico in 2019 included Veracruz de Ignacio de la Llave, México, Ciudad de México, Morelos, and Puebla, while four states, namely Nayarit, Campeche, Durango, and Yucatán, reported fewer than five kidnapping incidents in 2019. These patterns consistently held across all the datasets, with Veracruz de Ignacio de la Llave and México reporting the highest kidnapping records from 2015 to 2023. 
+
+```{r generate maps 2, message=FALSE}
+map2023 <- tm_shape(sf_merged %>% filter(Año == 2023)) +
+  tm_fill(col = "kidnapping_cnt", title = "Kidnapping", palette = "Purples", breaks = seq(0, 100, 20)) +
+  tm_layout(title = "Kidnapping Crimes in Mexico, 2023")
+tmap_arrange(map2019, map2023)
+```
+
+As comparison, we replicated the process for 2023 , and adjusted the interval due to the variablesion in the total crime number. The spatial patterns showed a noticeable rise in kidnapping incidents in states bordering the United States.  However, it's important to note that a comprehensive and statistically analysis is required to confirm the significance of these changes. The current assessment is primarily based on visual observation and requires further in-depth statistical analysis.
+
+```{r generate interactive map, message=FALSE}
+leaflet(sf_merged) %>%
+  addProviderTiles("OpenStreetMap.Mapnik") %>%
+  addPolygons(fillColor = ~colorQuantile("Purples", kidnapping_cnt)(kidnapping_cnt),
+              fillOpacity = 0.3,
+              color = "white",
+              weight = 1,
+              label = ~paste(Entidad, kidnapping_cnt),
+              labelOptions = labelOptions(direction = "auto"))
+```
+
+Lastly, we created interactive map using the Leaflet package, which allows the integration of a base map. It overlays the data on the based map so help to understand the geographical context, and spatial relationship. In R/Rstudio, researcher can interact with the map, zooming in on areas of interest, and attain additional information. We selected OpenStreetMap.Mapnik as the base map, which served as the canvas upon which the spatial analysis was performed. In the addPolygons function, we specified various options, including color codes, and determined what data would be displayed on the map. We applied a transparency fill of 0.1, which allowed us to see the underlying map features while overlaying the data. This transparency enhances the visibility of both the map features and the displayed data, providing a clearer understanding of the spatial distribution of kidnapping incidents.
+
+
+[^1]: https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva?state=published
+[^2]: more about shapfiles can refer to the official documentation provided by ArcGIS Online, available at https://doc.arcgis.com/en/arcgis-online/reference/shapefiles.htm)
+[^3]: https://data.humdata.org/dataset/cod-ab-mex?
