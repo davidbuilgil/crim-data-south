@@ -107,3 +107,21 @@ Lastly, we created interactive map using the Leaflet package, which allows the i
 [^1]: https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva?state=published
 [^2]: more about shapfiles can refer to the official documentation provided by ArcGIS Online, available at https://doc.arcgis.com/en/arcgis-online/reference/shapefiles.htm)
 [^3]: https://data.humdata.org/dataset/cod-ab-mex?
+
+
+
+
+Clarke, R. V., & Cornish, D. B. (2017). Modeling offenders' decisions: A framework for research and policy. In Crime Opportunity Theories (pp. 157-195). Routledge.
+
+Eck, J. E., Clarke, R. V., & Guerette, R. T. (2007). Risky facilities: Crime concentration in homogeneous sets of establishments and facilities. Crime prevention studies, 21, 225.
+
+Guerette, Rob T.; Headley, Andrea (2019, June): Kidnapping. Oxford Bibliographies Online. DOI: https://
+doi.org/10.1093/obo/9780195396607-0195
+
+Massa, R., & Fondevila, G. (2021). Criminal displacement in Mexico city's metropolitan area: The case of kidnapping. International Journal of Law, Crime and Justice, 67, 100479.
+
+Ochoa, R. (2019). Intimate Crimes: Kidnapping, Gangs, and Trust in Mexico City. Oxford University Press.
+
+U.S. Department of State, "Trafficking in Persons Report: Mexico," U.S. Department of State, https://www.state.gov/reports/2023-trafficking-in-persons-report/mexico/
+
+Yates, C., & Leutert, S. (2018). Migrant kidnapping in Mexico: regional differences. Austin, Texas: Strauss Center for International Security and Law (November).
