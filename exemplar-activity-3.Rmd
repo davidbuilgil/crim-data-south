@@ -70,22 +70,6 @@ To explore the data before mapping the frequencies, we look at the top 3 states 
 top_n(data_Mexico_states, 3, secuestro)
 ```
 
-We also examine descriptive statistics such as the mean, median, and standard deviation for further insights. The average number of kidnappings in each of the 32 Mexican states is approximately 36, but the distribution of kidnappings varies among the 32 states.
-
-```{r}
-mean(data_Mexico_states$secuestro)
-median(data_Mexico_states$secuestro)
-sd(data_Mexico_states$secuestro)
-```
-
-We conducted a histogram analysis to visually assess the distribution.
-
-```{r histogram, message=FALSE}
-ggplot(data_Mexico_states, aes(x = secuestro)) + 
-  geom_histogram() +
-  theme_minimal()
-```
-
 We observe the top three states (MEXICO, TAMAULIPAS, and VERACRUZ) stand out, with remarkably larger number of kidnappings that the rest of the country. To assess if these states are more at risk to kidnappings, we considered the kidnapping rate per population. It is possible that the three states have higher kidnapping counts because they have large populations, where more people can lead more crime incident, including kidnappings. To account this, we calculate kidnapping rates per 100,000 residents. We obtained census data from the National Institute of Statistics and Geography (INEGI): https://www.inegi.org.mx/app/tabulados/default.html?nc=mdemo02.
 
 ```{r population rate}
@@ -137,7 +121,7 @@ states_geojson <- states_geojson %>%
 
 We generate a heatmap of kidnapping rates across Mexican states utilising the `ggplot2` package and customise the fill colors. The output has been saved as a PNG file named 'Mexico_map.png' in the specified directory.
 
-```{r visualise map no show, include = FALSE}
+```{r visualise map no show}
 ggplot(data = states_geojson) +
   ggtitle("Rate of kidnappings per 100,000 residents in Mexico states") +
   geom_sf(aes(fill = secuestro_rate)) +
