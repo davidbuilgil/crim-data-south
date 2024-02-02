@@ -11,11 +11,12 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-In this sptial analysis activity, we explore the spatial distribution of kidnapping crime in Mexico. Kidnapping, defined as the unlawful abduction or captivate of individuals against their will, carries profound security implications (Guerette and Headley, 2019). Within the context of Mexico, kidnapping is closely linked to organised crime, particularly drug cartels, and poses a challenge to national security (Ochoa, 2019). Recent reports (U.S. Department of State) suggest that kidnapping in Mexcico is largely associated to the demand for illicit substances in the United States, leading to substantial financial costs for Mexican criminal organisations. These groups also exploit individuals, including children, for various criminal purposes, including kidnappings.
+In this spatial analysis activity, we explore the spatial distribution of kidnapping crime in Mexico. Kidnapping, defined as the unlawful abduction or captivate of individuals against their will, carries profound security implications. Within the context of Mexico, kidnapping is closely linked to organised crime, particularly drug cartels, and poses a challenge to national security (Jones, 2013; Massa and Fondevila, 2021; Ochoa, 2012, 2019). Kidnapping in Mexico is largely associated to the demand for illicit substances in the United States, leading to substantial financial costs for Mexican criminal organisations. These groups also exploit individuals, including children, for various criminal purposes, including kidnappings. Understanding the geographic distribution of these crimes may help developing better-informed crime prevention policies targeting areas that concentrate most offenses.
 
-We utilised police-recorded crime data released by the National Public Security System (SNSP) through the official portal of the Mexican Government [https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva?state=published](https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva?state=published).
+In this exemplar study we utilize police-recorded crime data released by the National Public Security System (SNSP) through the official portal of the Mexican Government [https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva?state=published](https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva?state=published).
 
-We began by loading the required packages in R.
+We begin by loading the required packages in R.
+
 ```{r packages, message = FALSE, warning = FALSE}
 library(here) # to identify the path to the data
 library(readr) # to read in CSV data
@@ -26,18 +27,19 @@ library(viridis) # for colour schemes
 library(leaflet) # for interactive maps
 ```
 
-The data are saved in a CSV (comma-separated data) and we employed the `read_csv()` function from the `readr` package, specifying the Latin1 encoding to correctly import the crime data into the `data_Mexico` object.
+The data are saved in a CSV (comma-separated data) and we employ the `read_csv()` function from the `readr` package, specifying the Latin1 encoding to correctly import the crime data into the `data_Mexico` object.
+
 ```{r open data, message=FALSE}
 #Read csv file with crime data
 data_Mexico <- read_csv(here("data/IDM_nov2023.csv", locale = locale(encoding = "Latin1")))
 ```
 
-We examined the dataset and identified the three variables of interest. 
-- `TIPO` (TYPE: type of crime)
-- `AÑO` (YEAR: year of crime recorded)
-- `ENTIDAD` (ENTITY: state of Mexico)
+We examine the dataset and identify the three variables of interest. 
+- `TIPO` (in English 'TYPE': type of crime)
+- `AÑO` (in English 'YEAR': year of crime recorded)
+- `ENTIDAD` (in English 'ENTITY': state of Mexico)
 
-The data contained 18 different crime types across 32 federal entities in Mexico from 2011 to 2017. To prepare the data for analysis, we reshaped the dataset by filtering the records specific to the year 2017 and the crime type `SECUESTRO` (Kidnapping).
+The data contains 18 different crime types across 32 federal entities in Mexico from 2011 to 2017. To prepare the data for analysis, we first reshape the dataset by filtering the records specific to the year 2017 and the crime type `SECUESTRO` (i.e., kidnapping).
 
 ```{r filter data}
 data_Mexico <- data_Mexico %>%
@@ -45,7 +47,7 @@ data_Mexico <- data_Mexico %>%
   filter(AÑO == 2017) # filter 2017
 ```
 
-We created a table which contains two columns: the state name (`ENTIDAD`) and the total number of kidnappings for each state. The data records kidnapping crimes monthly, with separate columns for each month of the year (e.g., Enero, Febrero and so on up to Diciembre). To calculate the annual total for each state, we used the `rowSums()` function, and specify the columns to be included using the `accross()` function. It is important to set the `na.rm` parameter to `TRUE` to ensure that missing data (NAs) are just treated as 0, no kidnapping crimes occurred in those months.
+We create a table which contains two columns: the state name (`ENTIDAD`) and the total number of kidnappings for each state. The data records kidnapping crimes monthly, with separate columns for each month of the year. To calculate the annual total for each state, we use the `rowSums()` function, and specify the columns to be included using the `accross()` function. It is important to set the `na.rm` parameter to `TRUE` to ensure that missing data (NAs) are just treated as 0 (i.e., no kidnapping crimes occurred in those months).
 
 ```{r clean data}
 data_Mexico <- data_Mexico %>%
@@ -53,7 +55,7 @@ data_Mexico <- data_Mexico %>%
                                  na.rm = TRUE)) # treat NA as 0 here
 ```
 
-We then computed the total number kidnappings in each state (`ENTIDAD`) in 2017. By using the `group_by()` and `summarise()` functions, we created a frequency table, which was saved as a new object called `data_Mexico_states`. In this table, each row corresponds to each sttate, providing a overview of kidnappings in 2017.
+We then compute the total number kidnappings in each state (`ENTIDAD`) in 2017. By using the `group_by()` and `summarise()` functions, we create a frequency table, which is saved as a new object called `data_Mexico_states`. In this table, each row corresponds to each state, providing a overview of kidnappings in 2017.
 
 ```{r calculate per state}
 #Calculate number of crimes in each state
@@ -62,12 +64,13 @@ data_Mexico_states <- data_Mexico %>%
   summarise(secuestro = sum(sum_secuestro)) # sum all kidnappings in the state
 ```
 
-To explore the data before mapping, we looked at the top 3 states with the highest number of kidnappings. The state Mexico has the highest numbers of kidnappings, totaling 173 crime records, followed by Veracruz with 172 incidents. 
+To explore the data before mapping the frequencies, we look at the top 3 states with the highest number of kidnappings. The state Mexico has the highest numbers of kidnappings, totaling 173 crime records, followed by Veracruz with 172 incidents.
+
 ```{r}
 top_n(data_Mexico_states, 3, secuestro)
 ```
 
-We also examined descriptive statistics such as mean, median, and standard deviation for further insights. The average number of kidnappings in each of the 32 Mexican states is approximately 36, but the distribution of kidnappings varies among the 32 states.
+We also examine descriptive statistics such as the mean, median, and standard deviation for further insights. The average number of kidnappings in each of the 32 Mexican states is approximately 36, but the distribution of kidnappings varies among the 32 states.
 
 ```{r}
 mean(data_Mexico_states$secuestro)
@@ -75,23 +78,23 @@ median(data_Mexico_states$secuestro)
 sd(data_Mexico_states$secuestro)
 ```
 
-We conducted a histgram analysis to visually assess the distribution.
+We conducted a histogram analysis to visually assess the distribution.
+
 ```{r histogram, message=FALSE}
 ggplot(data_Mexico_states, aes(x = secuestro)) + 
   geom_histogram() +
   theme_minimal()
 ```
 
-We observed the top three states (MEXICO, TAMAULIPAS, and VERACRUZ) stand out, quite different from the rest of the country. To assess if these states are more at risk to kidnappings, we considered the kidnapping rate per population. It is possible that the three states have higher kidnapping counts because they have large populations, where more people can lead more crime incident, including kidnappings. 
-
-To account this, we calculated kidnapping rates per 100,000 residents. We obtained census data from the National Institute of Statistics and Geography (INEGI): https://www.inegi.org.mx/app/tabulados/default.html?nc=mdemo02 
+We observe the top three states (MEXICO, TAMAULIPAS, and VERACRUZ) stand out, with remarkably larger number of kidnappings that the rest of the country. To assess if these states are more at risk to kidnappings, we considered the kidnapping rate per population. It is possible that the three states have higher kidnapping counts because they have large populations, where more people can lead more crime incident, including kidnappings. To account this, we calculate kidnapping rates per 100,000 residents. We obtained census data from the National Institute of Statistics and Geography (INEGI): https://www.inegi.org.mx/app/tabulados/default.html?nc=mdemo02.
 
 ```{r population rate}
 #Read csv file with population data
 population <- read_csv(here("data/Population2010.csv"))
 ```
 
-To link the population data with the kidnapping data, we combined the two tables using a common identifier, which remains as `ENTIDAD` in the crime data and `STATE` in INEGI's population statistics. We employed the left_join() function.
+To link the population data with the kidnapping data, we combined the two tables using a common identifier, which remains as `ENTIDAD` in the crime data and `STATE` in INEGI's population statistics. We employ the left_join() function.
+
 ```{r merge}
 #Merge with crime data and calculate crime rates
 data_Mexico_states <- data_Mexico_states %>%
@@ -99,15 +102,17 @@ data_Mexico_states <- data_Mexico_states %>%
   mutate(secuestro_rate = secuestro / Population2010 * 100000)
 ```
 
-We examined the top 5 states with the highest kidnapping rate per 100,000. 
+We examine the top 5 states with the highest kidnapping rate per 100,000.
+
 ```{r}
 top_n(data_Mexico_states, 3, secuestro_rate)
 ```
 
-We observed the new states (TABASCO and ZACATECAS) with high kidnapping rates. Tamaulipas consistently stood out in both a high count and a hige rate of kindnappings. This highlighed the significant of exploring potential problem-solving interventions to mitigate kidnnapping incident in this region. 
+We observe that the states with the highest kidnapping rates are Tabasco and Zacatecas. Tamaulipas consistently stood out in both a high count and a high rate of kidnappings. This highlights the significant of exploring potential problem-solving interventions to mitigate kidnapping incident in this region. 
 
-To further our understanding, we examined the spatial distribution of kidnappings and see any potential spatial relationships among these states through a thematic map. The spatial data in JSON format used in this exercise was obtained from the following source: [https://github.com/strotgen/mexico-leaflet/](https://github.com/strotgen/mexico-leaflet/). 
-To link geographical information with kidnapping rates, we began by importing geospatial data, which represented Mexican state's boundaries. We then standardised state names and merged the geospatial data with the kidnapping data to create a new data for spatial analysis. 
+To further our understanding, we examine the spatial distribution of kidnappings and inspect any potential spatial relationships among these states through a thematic map. The spatial data in JSON format used in this exercise was obtained from the following source: [https://github.com/strotgen/mexico-leaflet/](https://github.com/strotgen/mexico-leaflet/).
+
+To link geographical information with kidnapping rates, we begin by importing geospatial data, which represents the Mexican state's boundaries. We then standardise state names and merge the geospatial data with the kidnapping data to create a new data for spatial analysis. 
 
 ```{r load map, message = FALSE, warning = FALSE}
 #Read geojson of Mexico states
@@ -130,7 +135,8 @@ states_geojson <- states_geojson %>%
   left_join(data_Mexico_states, by = c("state_name" = "ENTIDAD"))
 ```
 
-We generated a heatmap of kidnapping rates across Mexican states utilising the `ggplot2` package and customised the fill colour. The output has been saved as a PNG file named 'Mexico_map.png' in the specified directory.
+We generate a heatmap of kidnapping rates across Mexican states utilising the `ggplot2` package and customise the fill colors. The output has been saved as a PNG file named 'Mexico_map.png' in the specified directory.
+
 ```{r visualise map no show, include = FALSE}
 ggplot(data = states_geojson) +
   ggtitle("Rate of kidnappings per 100,000 residents in Mexico states") +
@@ -142,9 +148,10 @@ ggsave(here("exemplar-activities/Mexico_map.png"),
        width = 10, height = 7)
 ```
 
-The heatmap illustrates the rate of kidnapping per 100,000 population across 32 states in Mexico. Yellow/orange shades on the map indicate higher kidnapping rates, while darker shades represent lower rates. These variations provide valuable insights for targeted interventions, highlighting areas where increased law enforcement resources may be necessary to effectively address and mitigate kidnapping incidents. This spatial analysis underscores the influence of strategic choices and operational structures on the concentration of kidnapping crimes, aligning with the opportunity theory in criminology, where criminals rationally assess opportunities for criminal activities.
+The heatmap illustrates the rate of kidnapping per 100,000 population across 32 states in Mexico. Yellow/orange shades on the map indicate higher kidnapping rates, while darker shades represent lower rates. These variations provide valuable insights for targeted interventions, highlighting areas where increased law enforcement resources may be necessary to effectively address and mitigate kidnapping incidents. This spatial analysis underscores the influence of strategic choices in crime prevention.
 
 Lastly, we created interactive map using the `Leaflet` package, which allows the integration of a base map. It overlays the data on the based map so help to understand the geographical context, and spatial relationship. In R, researcher can interact with the map, zooming in on areas of interest, and attain additional information. We selected OpenStreetMap.Mapnik as the base map, which served as the canvas upon which the spatial analysis was performed. In the `addPolygons` function, we specified various options, including color codes, and determined what data would be displayed on the map. We applied a transparency fill of 0.1, which allowed us to see the underlying map features while overlaying the data. This transparency enhances the visibility of both the map features and the displayed data, providing a clearer understanding of the spatial distribution of kidnapping incidents.
+
 ```{r generate interactive map, message=FALSE}
 leaflet(states_geojson) %>%
   addProviderTiles("OpenStreetMap.Mapnik") %>%
@@ -165,8 +172,10 @@ knitr::include_graphics(here("exemplar-activities/Mexico_map.png"))
 
 **References**
 
+Jones, N. (2013). The unintended consequences of kingpin strategies: kidnap rates and the Arellano-Félix Organization. Trends in Organized Crime, 16, 156–176. https://doi.org/10.1007/s12117-012-9185-x
 
-https://link.springer.com/article/10.1007/s12117-012-9185-x
-https://doi.org/10.1080/17440572.2011.632499
-https://doi.org/10.1016/j.ijlcj.2021.100479 
+Massa, R., and Fondevila, G. (2021). Criminal displacement in Mexico city's metropolitan area: The case of kidnapping. International Journal of Law, Crime and Justice, 67, 100479. https://doi.org/10.1016/j.ijlcj.2021.100479
 
+Ochoa. R. (2012). Not just the rich: New tendencies in kidnapping in Mexico City. Global Crime, 13(1), 1-21. https://doi.org/10.1080/17440572.2011.632499
+
+Ochoa, R. (2019). Intimate crimes: Kidnapping, gangs and trust in Mexico. Oxford: Oxford University Press.
