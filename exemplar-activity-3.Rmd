@@ -24,14 +24,14 @@ library(dplyr) # for data wrangling
 library(ggplot2) # for data visualisation
 library(sf) # for spatial data manipulation and visualisation
 library(viridis) # for colour schemes
-library(leaflet) # for interactive maps
 ```
 
 The data are saved in a CSV (comma-separated data) and we employ the `read_csv()` function from the `readr` package, specifying the Latin1 encoding to correctly import the crime data into the `data_Mexico` object.
 
 ```{r open data, message=FALSE}
 #Read csv file with crime data
-data_Mexico <- read_csv(here("data/IDM_nov2023.csv", locale = locale(encoding = "Latin1")))
+data_Mexico <- read_csv(here("data/IDM_nov2023.csv"), locale = locale(encoding = "Latin1"))
+
 ```
 
 We examine the dataset and identify the three variables of interest. 
@@ -149,20 +149,6 @@ ggsave(here("exemplar-activities/Mexico_map.png"),
 ```
 
 The heatmap illustrates the rate of kidnapping per 100,000 population across 32 states in Mexico. Yellow/orange shades on the map indicate higher kidnapping rates, while darker shades represent lower rates. These variations provide valuable insights for targeted interventions, highlighting areas where increased law enforcement resources may be necessary to effectively address and mitigate kidnapping incidents. This spatial analysis underscores the influence of strategic choices in crime prevention.
-
-Lastly, we created interactive map using the `Leaflet` package, which allows the integration of a base map. It overlays the data on the based map so help to understand the geographical context, and spatial relationship. In R, researcher can interact with the map, zooming in on areas of interest, and attain additional information. We selected OpenStreetMap.Mapnik as the base map, which served as the canvas upon which the spatial analysis was performed. In the `addPolygons` function, we specified various options, including color codes, and determined what data would be displayed on the map. We applied a transparency fill of 0.1, which allowed us to see the underlying map features while overlaying the data. This transparency enhances the visibility of both the map features and the displayed data, providing a clearer understanding of the spatial distribution of kidnapping incidents.
-
-```{r generate interactive map, message=FALSE}
-leaflet(states_geojson) %>%
-  addProviderTiles("OpenStreetMap.Mapnik") %>%
-  addPolygons(fillColor = ~colorQuantile("Purples", secuestro_rate)(secuestro_rate),
-              fillOpacity = 0.3,
-              color = "white",
-              weight = 1,
-              label = ~paste(state_name, secuestro_rate),
-              labelOptions = labelOptions(direction = "auto"))
-```
-
 
 ```{r visualise map display, echo = FALSE}
 knitr::include_graphics(here("exemplar-activities/Mexico_map.png"))
