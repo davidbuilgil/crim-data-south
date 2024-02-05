@@ -21,9 +21,9 @@ We begin by loading the required packages in R.
 library(here) # to identify the path to the data
 library(readr) # to read in CSV data
 library(dplyr) # for data wrangling
-library(ggplot2) # for data visualisation
-library(sf) # for spatial data manipulation and visualisation
-library(viridis) # for colour schemes
+library(ggplot2) # for data visualization
+library(sf) # for spatial data manipulation and visualization
+library(viridis) # for color schemes
 ```
 
 The data are saved in a CSV (comma-separated data) and we employ the `read_csv()` function from the `readr` package, specifying the Latin1 encoding to correctly import the crime data into the `data_Mexico` object.
@@ -64,22 +64,14 @@ data_Mexico_states <- data_Mexico %>%
   summarise(secuestro = sum(sum_secuestro)) # sum all kidnappings in the state
 ```
 
-To explore the data before mapping the frequencies, we look at the top 3 states with the highest number of kidnappings. The state Mexico has the highest numbers of kidnappings, totaling 173 crime records, followed by Veracruz with 172 incidents.
-
-```{r}
-top_n(data_Mexico_states, 3, secuestro)
-```
-
 We observe the top three states (MEXICO, TAMAULIPAS, and VERACRUZ) stand out, with remarkably larger number of kidnappings that the rest of the country. To assess if these states are more at risk to kidnappings, we considered the kidnapping rate per population. It is possible that the three states have higher kidnapping counts because they have large populations, where more people can lead more crime incident, including kidnappings. To account this, we calculate kidnapping rates per 100,000 residents. We obtained census data from the National Institute of Statistics and Geography (INEGI): https://www.inegi.org.mx/app/tabulados/default.html?nc=mdemo02.
-
-```{r population rate}
-#Read csv file with population data
-population <- read_csv(here("data/Population2010.csv"))
-```
 
 To link the population data with the kidnapping data, we combined the two tables using a common identifier, which remains as `ENTIDAD` in the crime data and `STATE` in INEGI's population statistics. We employ the left_join() function.
 
-```{r merge}
+```{r population merge}
+#Read csv file with population data
+population <- read_csv(here("data/Population2010.csv"))
+
 #Merge with crime data and calculate crime rates
 data_Mexico_states <- data_Mexico_states %>%
   left_join(population, by = c("ENTIDAD" = "STATE")) %>%

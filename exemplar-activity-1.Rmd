@@ -17,11 +17,11 @@ We begin by loading the required packages in R:
 
 
 ```{r packages, message = FALSE, warning = FALSE}
-library(here)
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(ggplot2)
+library(here) # to identify the path to the data
+library(dplyr) # for data wrangling
+library(tidyr) # for data wrangling
+library(stringr) #to work with stings
+library(ggplot2) # for visualizations
 ```
 
 We open this dataset and select the following East and Southeast Asian countries that have been influenced by Confucianism (Oldstone-Moore, 2023): developed economies – Hong Kong, Japan, Singapore, and South Korea  – and developing economies – (People’s Republic of) China, Indonesia, Macau, Malaysia, Mongolia, North Korea, and Vietnam; a total of 11 countries plus the world average. Data from Taiwan were unavailable in this dataset  The selection of developing countries was informed by: Global South Countries 2023 (https://worldpopulationreview.com/country-rankings/global-south-countries) and the World Bank (https://datatopics.worldbank.org/world-development-indicators/the-world-by-income-and-region.html).
