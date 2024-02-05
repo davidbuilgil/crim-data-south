@@ -33,7 +33,7 @@ alg <- read_sav(here("data/alg_r6_data.sav"))
 
 #Inspect variable Q11B, as an example
 table(alg$Q11B)
-prop.table(alg$Q11B)
+prop.table(table(alg$Q11B))
 ```
 
 Both the variables have five different possible values, including 0 = not at all, 1 = a little, 2 = somewhat, 3 = a lot, and 9 = NA for confidence in policing'; and 0 = no, 1 = once, 2 = twice, 3 = three or more, and 9 = NA for victimization experiences. In terms of experience with having been assaulted, almost 80% of respondents declared having no such experience in the past year, whereas 14% of respondents claimed to have been victims once with the remaining options not even adding up to 1%. The variable measuring trust in police displays quite an equal distribution  of respondents declaring at least some level of trust in police with their share of respondents fluctuating between 25% and 30%, while only 13% percent of respondent declared no trust in police at all. For both variables, values ‘9’ refer to values that we would like to filter out from the analysis. To do this, we use the 'tidyverse' suite of R packages (Wickham et al., 2019) and we also simultaneously select only the two variables we will be working with in this example using the pipe operator (‘%>%’).
@@ -82,9 +82,17 @@ ggsave(here("exemplar-activities/bar_graph_trust.png"),
 
 Visualization and numeric description of variables can be informative, but it is not sufficient for testing the hypothesis of whether there is an association between these two variables. This is usually done with the use of contingency tables also known as crosstables. The 'gmodels' package (Warnes et al., 2019) allows users to create highly informative and visually clear crosstables.
 
-```{r crosstable, results='hide'}
+```{r crosstable, include=FALSE}
 # crosstable with residuals, row percent + a full table
 CrossTable(algS$Q52Hf, algS$Q11BfR, format = c("SPSS"), 
+           chisq = TRUE, prop.c = FALSE, prop.chisq = FALSE, 
+           prop.t = FALSE, asresid = TRUE)
+
+```
+
+```{r crosstable 2, results='hide'}
+# crosstable with residuals, row percent + a full table
+CrossTable(algS$Q11BfR, algS$Q52Hf, format = c("SPSS"), 
            chisq = TRUE, prop.c = FALSE, prop.chisq = FALSE, 
            prop.t = FALSE, asresid = TRUE)
 
@@ -94,7 +102,7 @@ The crosstabulation (Table 2) displays the categories of trust in police in rows
 
 We can therefore conclude that the two variables are not independent of each other. Finally, we also used the 'lsr' package (Navarro, 2015) to calculate one of the most frequently used coefficients of association for categorical variables – Cramér’s V. Using a coefficient of association allows us to complement the statistical test with a measure of effect size. The resulting value of 0.16 indicates that the relationship between trust in police and being a victim of assault is medium. 
 
-```{r final analysis, results='hide'}
+```{r final analysis}
 
 # select only the relevant columns
 tab <- table(algS$Q52Hf, algS$Q11BfR)
