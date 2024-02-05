@@ -1,0 +1,121 @@
+---
+title: "Case Study 2: Describing and Testing the Association Between Trust in Police and Assault Victimisation in Algeria Using Crosstabulations"
+author: "Nicholas Tratjenberg-Pareja, Tomáš Diviák"
+date: "2024-02-05"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This activity shows how to undertake bivariate and inferential statistical analysis. The idea is to analyse the relationship between the experience of being victimized and perceptions of trust in public institutions in Africa. 
+
+There is a long tradition in criminology of research on public attitudes toward criminal justice and legal institutions given its role on compliance and cooperation with law enforcement (Bradford & Jackson, 2010; Sherman, 2002; Tyler, 2006). One of the key determinants of trust in Criminal Justice  Institutions is crime experiences. Previous studies have shown that citizens that were victims of crime are more likely to show more negative perceptions of police and less confidence in them (Berthelot et al., 2018; Callahan & Rosenberg, 2011; O’Connor, 2008; Sprott & Doob, 2009). Alternatively, some research has shown that those that trust less in the police are less likely to report violent crimes (Kääriäinen & Sirén, 2011). Yet, most of the research has been conducted in North America and Europe. Exploring the relationship between victimization and trust in police in the global south is worth considering the elevated levels of violence observed, particularly in Latin America and Africa (UNOCD, 2O23) and also by the under-resourced and weak criminal justice institutions in these regions (Bergman, 2018). Some recent research has shown that trust in police is also higher among citizens that have not been victimized in african countries such as South Africa (Olutola & Bello, 2016), and even that this difference in trust in police due to victimization is a characteristic of developing countries and not so much in more industrialized ones (Alda et al., 2017).
+
+```{r packages, message = FALSE, warning = FALSE}
+library(tidyverse) # for data transformations etc.
+library(haven) # for importing data
+library(ggplot2) # for visualisations
+library(gmodels) # for crosstables
+library(lsr) # Cramer's V
+```
+
+In this context, we are interested to know if there is a relationship between victimization and trust in a criminal justice institution in Algeria. This exercise will allow us to explore creation of new variables collapsing categories, building cross tables, and analysis of association and testing independence.
+
+In order to explore the relationship between victimisation and trust in criminal justice institutions in Algeria, we will use the Algerian part of the Afrobarometer dataset (Hammani et al., 2015). Using the haven package in R (Wickham & Miller, 2020), we will load the dataset and inspect the two variables of interest: having been a victim of assault (named Q11B in the original data) and trust in police (Q52H). 
+
+
+```{r data import}
+alg <- read_sav("alg_r6_data.sav")
+View(alg)
+
+# Q52H = trust in police
+# 0 = not at all; 1 = a little; 2 = somewhat; 3 = a lot; 9 = NA
+table(alg$Q52H)
+prop.table(table(alg$Q52H))
+str(alg$Q52H)
+
+# Q11B = how often have been physically attacked
+# 0 = no; 1 = once; 2 = twice; 3 = three or more; 9 = NA
+table(alg$Q11B)
+prop.table(table(alg$Q11B))
+str(alg$Q11B)
+```
+
+Both the variables have five different possible values as shown in tables N and M. In terms of experience with having been assaulted, almost 80% of respondents declared having no such experience in the past year, whereas 14% of respondents claimed to have been victims once with the remaining options not even adding up to 1%. The variable measuring trust in police displays quite an equal distribution  of respondents declaring at least some level of trust in police with their share of respondents fluctuating between 25% and 30%, while only 13% percent of respondent declared no trust in police at all. Values ‘9’ refer to values that we would like to filter out from the analysis as they essentially denote a missing observation. To do this, we use the tidyverse suite of R packages (Wickham et al., 2019) and we also simultaneously select only the two variables we will be working with in this example using the pipe operator (‘%>%’).
+
+```{r data cleaning}
+# removing 9s (NAs) from variables
+algS <- alg %>% 
+  # select only the columns to be analysed
+  select(Q11B, Q52H) %>% 
+  # filter out only valid responses (9 = NA)
+  filter(Q11B != 9, Q52H != 9)
+
+table(algS$Q11B)
+table(algS$Q52H)
+
+str(algS$Q11B)
+str(algS$Q52H)
+
+# convert to labelled factors
+algS <- algS %>%   
+  mutate(Q11Bf = as_factor(Q11B),
+         Q52Hf = as_factor(Q52H))
+
+# univariate description
+table(algS$Q52Hf)
+table(algS$Q11Bf)
+```
+A suitable way to visualise the relationship between two categorical variables is to use stacked or clustered barplot. In figure N, we use a stacked barplot as implemented in the ggplot2 package (Wickham, 2016). This visualisation suggests that the distribution of assault victimisation is quite similar across the values of trust in police with the exception of respondents who trust police ‘a lot’, among whom the share of victimised respondents is substantially smaller. 
+
+```{r visualisation}
+# stacked bar chart
+ggplot(algS, aes(x  = Q11Bf, fill = Q52Hf)) +
+  geom_bar(position = "fill")
+
+```
+Visualisation and numeric description of variables can be informative, but it is not sufficient for testing the hypothesis of whether there is an association between these two variables. This is usually done with the use of contingency tables also known as crosstables. The gmodels package in R (Warnes et al., 2019) allows users to create highly informative and visually clear crosstables like those known from other statistical packages such as SPSS or Stata. 
+```{r crosstable}
+# crosstable with residuals, row percent + a full table
+CrossTable(algS$Q52Hf, algS$Q11Bf, format = c("SPSS"), chisq = TRUE, 
+           prop.c = FALSE, prop.chisq = FALSE, prop.t = FALSE, asresid = TRUE)
+
+```
+The crosstabulation (table O) displays the categories of trust in police in rows and assault victimisation in columns. Each cell contains the number of observations, its row percentage, and its adjusted standardised residual respectively. Below the table, we can also find the information related to Pearson's chi-squared test of independence. While the p-value of this test would suggest that we can reject the null hypothesis of independence between these two variables, the information that follows indicates that the crosstable is not sufficiently filled and therefore the test results are not valid. This can be solved by transforming the variables so that there are less categories in each and thus the resulting table could be better filled. This is done using the following code in the tidyverse package which we immediately follows with a stacked barchart of the transformed variables.  
+```{r transformations}
+# collapsing the categories using mutate
+algS <- algS %>%
+  mutate(Q11BfR = recode_factor(Q11Bf, 
+                                "No" = "No", 
+                                "Yes, once" = "Yes",
+                                "Yes, twice" = "Yes",
+                                "Yes, three or more times" = "Yes"))
+
+algS <- algS %>%
+  mutate(Q52HfR = recode_factor(Q52Hf, 
+                                "Not at all" = "No", 
+                                "Just a little" = "No",
+                                "Somewhat" = "Yes",
+                                "A lot" = "Yes"))
+
+```
+The stacked bar chart (figure O) suggests that there is no discernible association between the transformed trust in police and assault victimisation. This can be corroborated by a new crosstable below. Compared to table O, table P also displays the column percentages and while it indeed displays a sufficiently filled table, the null hypothesis of Pearson’s chi-squared test of independence cannot be rejected at any of the standard significance levels. We can therefore conclude that the two variables are independent of each other. Finally, we also used the lsr package (Navarro, 2015) to calculate one of the most frequently used coefficients of association for categorical variables – Cramér’s V. Using a coefficient of association allows us to complement the statistical test with a measure of effect size. The resulting value of 0.04 further strengthens the evidence that the relationship between trust in police and being a victim of assault is rather weak. 
+
+```{r final analysis}
+# stacked bar chart
+ggplot(algS, aes(x  = Q11BfR, fill = Q52HfR)) +
+  geom_bar(position = "fill")
+
+# crosstable with residuals, row percent + a full table
+CrossTable(algS$Q52HfR, algS$Q11BfR, format = c("SPSS"), chisq = TRUE, 
+           prop.chisq = FALSE, prop.t = FALSE, asresid = TRUE)
+
+# coefficient of association
+tab <- table(algS$Q52HfR, algS$Q11BfR)
+# necessary to subselect only the relevant columns
+tabR <- tab[1:2, 1:2] 
+cramersV(tabR)
+
+```
