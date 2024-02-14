@@ -73,6 +73,8 @@ A suitable way to visualize the relationship between two categorical variables i
 # stacked bar chart
 ggplot(algS, aes(x  = Q11BfR, fill = Q52Hf)) +
   geom_bar(position = "fill") +
+  labs(x = "Victimization",
+       fill = 'Trust in police') +
   theme_minimal()
 
 ggsave(here("exemplar-activities/bar_graph_trust.png"), 
